@@ -1,4 +1,4 @@
-//Create web server
+// Create web server
 const express = require('express')
 
 // Using const (recommended for Express apps)
