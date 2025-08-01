@@ -1,51 +1,32 @@
+# .github/workflows/4-copilot-comment.yml
 name: Step 4, Add Copilot suggestion from comment
-
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-    paths:
-      - "comments.js"
-
-permissions:
-  contents: write
-
+    branches: [ main ]
 jobs:
-  get_current_step:
-    name: Check current step number
+  check-workflow:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-      - id: get_step
-        run: echo "current_step=$(cat ./.github/steps/-step.txt)" >> $GITHUB_OUTPUT
-    outputs:
-      current_step: ${{ steps.get_step.outputs.current_step }}
-
-  on_push_to_comments:
-    name: On code generated from comment
-    needs: get_current_step
-    if: ${{ !github.event.repository.is_template && needs.get_current_step.outputs.current_step == 4}}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Check workflow contents, jobs
-        uses: skills/action-check-file@v1
-        with:
-          file: "comments.js"
-          search: "Create web server"
         env:
-          FILE: "comments.js"
-          SEARCH: "Create web server"
-
-      - name: Update to step X
-        uses: skills/action-update-step@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          from_step: 4
-          to_step: 5
+          FILE: comments.js
+          SEARCH: Create web server
+        run: |
+          echo "Check that all required env variables are set"
+          if [ -z "$FILE" ]; then
+            echo "FILE is unset or set to the empty string"
+            exit 1
+          fi
+          if [ -z "$SEARCH" ]; then
+            echo "SEARCH is unset or set to the empty string"
+            exit 1
+          fi
+          if ! grep -q "$SEARCH" "$FILE"; then
+            echo "Missing $SEARCH in $FILE"
+            echo "----------------"
+            echo "$(cat $FILE)"
+            exit 204  # We're sending a weird code so it looks different from other "failures"
+          fi
